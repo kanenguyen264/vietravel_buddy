@@ -169,7 +169,7 @@ function App() {
                 {/* Subtitle */}
                 <p className="text-xl md:text-2xl mb-12 text-gray-600 max-w-4xl mx-auto leading-relaxed">
                   Nền tảng kết nối du khách với các dịch vụ du lịch chất lượng cao. Từ hướng dẫn
-                  viên chuyên nghiệp đến lưu trú và ẩm thực địa phương...
+                  viên chuyên nghiệp đến lưu trú và ẩm thực địa phương.
                 </p>
 
                 {/* CTA Buttons */}
