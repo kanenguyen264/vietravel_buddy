@@ -4,10 +4,30 @@ import { ChevronDown, Navigation, ShoppingCart, CreditCard, Star, Clock, MapPin,
 const FoodPage: React.FC = () => {
   const [selectedCity, setSelectedCity] = useState('TP. Hồ Chí Minh');
   const [selectedFood, setSelectedFood] = useState('');
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedRestaurant, setSelectedRestaurant] = useState(null);
+  const [bookingData, setBookingData] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    date: '',
+    time: '',
+    guests: '2',
+    note: ''
+  });
+  const [paymentData, setPaymentData] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    amount: '',
+    paymentMethod: 'bank_transfer',
+    note: ''
+  });
 
   const cities = ['TP. Hồ Chí Minh', 'Hà Nội', 'Đà Nẵng'];
   const foods = [
-    'Phở', 'Bánh mì', 'Cơm tấm', 'Bún bò Huế', 
+    'Phở', 'Bánh mì', 'Cơm tấm', 'Bún bò Huế',
     'Bánh xèo', 'Gỏi cuốn', 'Chè', 'Cao lầu'
   ];
 
@@ -100,15 +120,74 @@ const FoodPage: React.FC = () => {
   ];
 
   const handleDirection = (restaurant: any) => {
-    alert(`Chỉ đường đến ${restaurant.name} tại ${restaurant.address}`);
+    // Tạo URL Google Maps với địa chỉ của nhà hàng
+    const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurant.address)}`;
+    // Mở Google Maps trong tab mới
+    window.open(googleMapsUrl, '_blank');
   };
 
   const handleBookNow = (restaurant: any) => {
-    alert(`Đặt bàn tại ${restaurant.name} thành công! Chúng tôi sẽ liên hệ xác nhận trong 15 phút.`);
+    setSelectedRestaurant(restaurant);
+    setShowBookingModal(true);
+  };
+
+  const handleBookingSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Xử lý đặt bàn
+    alert(`Đặt bàn thành công tại ${selectedRestaurant?.name}!\nTên: ${bookingData.name}\nSố điện thoại: ${bookingData.phone}\nNgày giờ: ${bookingData.date} ${bookingData.time}\nSố khách: ${bookingData.guests} người\n\nChúng tôi sẽ liên hệ xác nhận trong 15 phút.`);
+
+    // Reset form và đóng modal
+    setBookingData({
+      name: '',
+      phone: '',
+      email: '',
+      date: '',
+      time: '',
+      guests: '2',
+      note: ''
+    });
+    setShowBookingModal(false);
+  };
+
+  const handleCloseModal = () => {
+    setShowBookingModal(false);
+    setSelectedRestaurant(null);
   };
 
   const handlePayment = (restaurant: any) => {
-    alert(`Chuyển đến trang thanh toán trước cho ${restaurant.name}`);
+    setSelectedRestaurant(restaurant);
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    let paymentInfo = '';
+    if (paymentData.paymentMethod === 'bank_transfer') {
+      paymentInfo = 'Thông tin chuyển khoản:\n• Ngân hàng: Vietcombank\n• Số tài khoản: 0123456789\n• Chủ tài khoản: CÔNG TY TNHH ẨM THỰC VIỆT\n• Nội dung: THANHTOAN ' + paymentData.name.toUpperCase().replace(/\s/g, '');
+    } else if (paymentData.paymentMethod === 'momo') {
+      paymentInfo = 'Thông tin MoMo:\n• Số điện thoại: 0987654321\n• Tên: CÔNG TY TNHH ẨM THỰC VIỆT';
+    } else {
+      paymentInfo = 'Quét mã QR để thanh toán';
+    }
+
+    alert(`Thanh toán trước thành công!\nNhà hàng: ${selectedRestaurant?.name}\nKhách hàng: ${paymentData.name}\nSố tiền: ${paymentData.amount} VNĐ\n\n${paymentInfo}\n\nChúng tôi sẽ xác nhận thanh toán trong 5-10 phút.`);
+
+    // Reset form và đóng modal
+    setPaymentData({
+      name: '',
+      phone: '',
+      email: '',
+      amount: '',
+      paymentMethod: 'bank_transfer',
+      note: ''
+    });
+    setShowPaymentModal(false);
+  };
+
+  const handleClosePaymentModal = () => {
+    setShowPaymentModal(false);
+    setSelectedRestaurant(null);
   };
 
   const filteredRestaurants = restaurants.filter(restaurant => {
@@ -187,17 +266,16 @@ const FoodPage: React.FC = () => {
             <h2 className="text-2xl font-bold text-gray-900 mb-6">
               Món ăn phổ biến tại {selectedCity}
             </h2>
-            
+
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
               {foods.map((food) => (
                 <button
                   key={food}
                   onClick={() => setSelectedFood(food)}
-                  className={`p-4 rounded-lg border transition-colors text-center ${
-                    selectedFood === food
+                  className={`p-4 rounded-lg border transition-colors text-center ${selectedFood === food
                       ? 'border-blue-500 bg-blue-50 text-blue-700'
                       : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
-                  }`}
+                    }`}
                 >
                   <div className="font-medium">{food}</div>
                 </button>
@@ -210,7 +288,7 @@ const FoodPage: React.FC = () => {
             <h2 className="text-2xl font-bold text-gray-900 mb-6">
               Nhà hàng nổi bật tại {selectedCity}
             </h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredRestaurants.map((restaurant) => (
                 <div
@@ -290,7 +368,7 @@ const FoodPage: React.FC = () => {
                         <Navigation className="h-5 w-5" />
                         <span>Chỉ đường</span>
                       </button>
-                      
+
                       {/* Book Now Button */}
                       <button
                         onClick={() => handleBookNow(restaurant)}
@@ -299,7 +377,7 @@ const FoodPage: React.FC = () => {
                         <ShoppingCart className="h-5 w-5" />
                         <span>Đặt ngay</span>
                       </button>
-                      
+
                       {/* Payment Button */}
                       <button
                         onClick={() => handlePayment(restaurant)}
@@ -330,6 +408,401 @@ const FoodPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Booking Modal */}
+      {showBookingModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              {/* Modal Header */}
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Đặt bàn</h2>
+                  <p className="text-sm text-gray-600 mt-1">{selectedRestaurant?.name}</p>
+                </div>
+                <button
+                  onClick={handleCloseModal}
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Booking Form */}
+              <form onSubmit={handleBookingSubmit} className="space-y-4">
+                {/* Name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Họ và tên *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={bookingData.name}
+                    onChange={(e) => setBookingData({ ...bookingData, name: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholder="Nhập họ và tên"
+                  />
+                </div>
+
+                {/* Phone */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Số điện thoại *
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    value={bookingData.phone}
+                    onChange={(e) => setBookingData({ ...bookingData, phone: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholder="Nhập số điện thoại"
+                  />
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={bookingData.email}
+                    onChange={(e) => setBookingData({ ...bookingData, email: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholder="Nhập email"
+                  />
+                </div>
+
+                {/* Date and Time */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Ngày *
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={bookingData.date}
+                      onChange={(e) => setBookingData({ ...bookingData, date: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Giờ *
+                    </label>
+                    <input
+                      type="time"
+                      required
+                      value={bookingData.time}
+                      onChange={(e) => setBookingData({ ...bookingData, time: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                {/* Number of Guests */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Số khách *
+                  </label>
+                  <select
+                    required
+                    value={bookingData.guests}
+                    onChange={(e) => setBookingData({ ...bookingData, guests: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+                      <option key={num} value={num}>{num} người</option>
+                    ))}
+                    <option value="10+">Trên 10 người</option>
+                  </select>
+                </div>
+
+                {/* Special Note */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Ghi chú đặc biệt
+                  </label>
+                  <textarea
+                    value={bookingData.note}
+                    onChange={(e) => setBookingData({ ...bookingData, note: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    rows={3}
+                    placeholder="Yêu cầu đặc biệt, dị ứng thực phẩm..."
+                  />
+                </div>
+
+                {/* Restaurant Info */}
+                <div className="bg-gray-50 rounded-lg p-4 mt-6">
+                  <h3 className="font-semibold text-gray-900 mb-2">Thông tin nhà hàng</h3>
+                  <div className="space-y-2 text-sm text-gray-600">
+                    <div className="flex items-center space-x-2">
+                      <MapPin className="h-4 w-4" />
+                      <span>{selectedRestaurant?.address}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Phone className="h-4 w-4" />
+                      <span>{selectedRestaurant?.phone}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Clock className="h-4 w-4" />
+                      <span>{selectedRestaurant?.hours}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Submit Buttons */}
+                <div className="flex space-x-4 pt-6">
+                  <button
+                    type="button"
+                    onClick={handleCloseModal}
+                    className="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 transition-colors font-medium"
+                  >
+                    Xác nhận đặt bàn
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              {/* Modal Header */}
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Thanh toán trước</h2>
+                  <p className="text-sm text-gray-600 mt-1">{selectedRestaurant?.name}</p>
+                </div>
+                <button
+                  onClick={handleClosePaymentModal}
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Payment Form */}
+              <form onSubmit={handlePaymentSubmit} className="space-y-4">
+                {/* Customer Info */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Họ và tên *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={paymentData.name}
+                    onChange={(e) => setPaymentData({ ...paymentData, name: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Nhập họ và tên"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Số điện thoại *
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    value={paymentData.phone}
+                    onChange={(e) => setPaymentData({ ...paymentData, phone: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Nhập số điện thoại"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={paymentData.email}
+                    onChange={(e) => setPaymentData({ ...paymentData, email: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Nhập email để nhận hóa đơn"
+                  />
+                </div>
+
+                {/* Payment Amount */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Số tiền thanh toán *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      required
+                      value={paymentData.amount}
+                      onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 pr-12 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Nhập số tiền"
+                      min="10000"
+                    />
+                    <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
+                      VNĐ
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Số tiền tối thiểu: 10,000 VNĐ</p>
+                </div>
+
+                {/* Payment Method */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Phương thức thanh toán *
+                  </label>
+                  <div className="space-y-3">
+                    <div className="flex items-center">
+                      <input
+                        type="radio"
+                        id="bank_transfer"
+                        name="paymentMethod"
+                        value="bank_transfer"
+                        checked={paymentData.paymentMethod === 'bank_transfer'}
+                        onChange={(e) => setPaymentData({ ...paymentData, paymentMethod: e.target.value })}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                      />
+                      <label htmlFor="bank_transfer" className="ml-3 flex items-center">
+                        <span className="text-sm text-gray-900">Chuyển khoản ngân hàng</span>
+                        <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Phổ biến</span>
+                      </label>
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="radio"
+                        id="momo"
+                        name="paymentMethod"
+                        value="momo"
+                        checked={paymentData.paymentMethod === 'momo'}
+                        onChange={(e) => setPaymentData({ ...paymentData, paymentMethod: e.target.value })}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                      />
+                      <label htmlFor="momo" className="ml-3 text-sm text-gray-900">
+                        Ví MoMo
+                      </label>
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="radio"
+                        id="qr_code"
+                        name="paymentMethod"
+                        value="qr_code"
+                        checked={paymentData.paymentMethod === 'qr_code'}
+                        onChange={(e) => setPaymentData({ ...paymentData, paymentMethod: e.target.value })}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                      />
+                      <label htmlFor="qr_code" className="ml-3 text-sm text-gray-900">
+                        Quét mã QR
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Note */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Ghi chú
+                  </label>
+                  <textarea
+                    value={paymentData.note}
+                    onChange={(e) => setPaymentData({ ...paymentData, note: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    rows={2}
+                    placeholder="Ghi chú cho đơn thanh toán..."
+                  />
+                </div>
+
+                {/* Restaurant Info */}
+                <div className="bg-blue-50 rounded-lg p-4 mt-6">
+                  <h3 className="font-semibold text-gray-900 mb-2">Thông tin nhà hàng</h3>
+                  <div className="space-y-2 text-sm text-gray-600">
+                    <div className="flex items-center space-x-2">
+                      <MapPin className="h-4 w-4" />
+                      <span>{selectedRestaurant?.address}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Phone className="h-4 w-4" />
+                      <span>{selectedRestaurant?.phone}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Clock className="h-4 w-4" />
+                      <span>{selectedRestaurant?.hours}</span>
+                    </div>
+                    <div className="text-sm font-medium text-blue-700 mt-2">
+                      Khoảng giá: {selectedRestaurant?.priceRange}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Payment Info */}
+                {paymentData.paymentMethod === 'bank_transfer' && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <h4 className="font-medium text-yellow-800 mb-2">Thông tin chuyển khoản</h4>
+                    <div className="text-sm text-yellow-700 space-y-1">
+                      <div>• Ngân hàng: <strong>Vietcombank</strong></div>
+                      <div>• Số tài khoản: <strong>0123456789</strong></div>
+                      <div>• Chủ tài khoản: <strong>CÔNG TY TNHH ẨM THỰC VIỆT</strong></div>
+                      <div className="text-xs mt-2 text-yellow-600">
+                        * Vui lòng ghi đúng nội dung chuyển khoản để được xử lý nhanh chóng
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {paymentData.paymentMethod === 'momo' && (
+                  <div className="bg-pink-50 border border-pink-200 rounded-lg p-4">
+                    <h4 className="font-medium text-pink-800 mb-2">Thông tin MoMo</h4>
+                    <div className="text-sm text-pink-700 space-y-1">
+                      <div>• Số điện thoại: <strong>0987654321</strong></div>
+                      <div>• Tên: <strong>CÔNG TY TNHH ẨM THỰC VIỆT</strong></div>
+                    </div>
+                  </div>
+                )}
+
+                {paymentData.paymentMethod === 'qr_code' && (
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
+                    <div className="w-32 h-32 bg-gray-200 rounded-lg mx-auto mb-3 flex items-center justify-center">
+                      <span className="text-gray-500 text-sm">Mã QR</span>
+                    </div>
+                    <p className="text-sm text-gray-600">Quét mã QR để thanh toán</p>
+                  </div>
+                )}
+
+                {/* Submit Buttons */}
+                <div className="flex space-x-4 pt-6">
+                  <button
+                    type="button"
+                    onClick={handleClosePaymentModal}
+                    className="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                  >
+                    Xác nhận thanh toán
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
